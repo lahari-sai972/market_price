@@ -128,7 +128,7 @@ const PricePredictor: React.FC = () => {
                     <option value="">{t('selectState')}</option>
                     {statesAndCities.map((state) => (
                       <option key={state.name} value={state.name}>
-                        {t(state.name)} {/* <-- Translation added here */}
+                        {t(state.name)}
                       </option>
                     ))}
                   </select>
@@ -153,7 +153,7 @@ const PricePredictor: React.FC = () => {
                     <option value="">{formData.state ? t('selectCity') : t('selectStateFirst')}</option>
                     {availableCities.map((city) => (
                       <option key={city} value={city}>
-                        {t(city)} {/* <-- Translation added here */}
+                        {t(city)}
                       </option>
                     ))}
                   </select>
@@ -177,7 +177,7 @@ const PricePredictor: React.FC = () => {
                     <option value="">{t('selectCropType')}</option>
                     {CROP_TYPES.map((crop) => (
                       <option key={crop} value={crop}>
-                        {t(crop)} {/* <-- Translation added here */}
+                        {t(crop)}
                       </option>
                     ))}
                   </select>
@@ -241,12 +241,12 @@ const PricePredictor: React.FC = () => {
                 <div className="bg-gradient-to-r from-green-50 to-amber-50 rounded-xl p-6 border border-green-200">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-gray-900">
-                      {t(prediction.cropType)} - {t(prediction.location)} {/* <-- Translating the result display too! */}
+                      {t(prediction.cropType)} - {t(prediction.location)}
                     </h3>
                     <div className="flex items-center">
                       {trendDetails.icon}
                       <span className={`ml-2 text-sm font-medium ${trendDetails.color}`}>
-                        {prediction.marketTrend.charAt(0).toUpperCase() + prediction.marketTrend.slice(1)}
+                        {t(prediction.marketTrend)} {/* Fixed translation call */}
                       </span>
                     </div>
                   </div>
@@ -277,7 +277,7 @@ const PricePredictor: React.FC = () => {
                   <p className="text-sm text-blue-800">
                     {t('currentMarketTrendFor')} {t(prediction.cropType)} {t('in')} {t(prediction.location)} {t('is')}{' '}
                     <span className={`font-semibold ${trendDetails.color}`}>
-                      {prediction.marketTrend}
+                      {t(prediction.marketTrend)} {/* Fixed translation call */}
                     </span>
                     . {t('pricesBasedOnInfo')}
                   </p>
