@@ -1,11 +1,16 @@
-import React, { useState } from 'react';
-import { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useTranslation } from "react-i18next";
 import { MapPin, Wheat, Package, TrendingUp, TrendingDown, Minus, Calculator } from 'lucide-react';
+
 import { predictPrice } from '../utils/mockApi';
 import { PriceResponse } from '../types';
 import { statesAndCities, getCitiesByState } from '../utils/locationData';
 
+// Moved outside the component to prevent re-creating the array on every render
+const CROP_TYPES = ['Wheat', 'Rice', 'Sugarcane', 'Cotton', 'Maize'];
+
 const PricePredictor: React.FC = () => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     state: '',
     location: '',
@@ -27,22 +32,24 @@ const PricePredictor: React.FC = () => {
     }
   }, [formData.state]);
 
-  const cropTypes = [
-    'Wheat', 'Rice', 'Sugarcane', 'Cotton', 'Maize'
-  ];
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
     if (!formData.location || !formData.cropType || !formData.quantity) {
-      setError('Please fill in all fields');
+      setError(t('errorFillFields'));
       return;
     }
 
-    const quantity = parseFloat(formData.quantity);
+    const quantityStr = formData.quantity.trim();
+    if (!/^\d*\.?\d+$/.test(quantityStr)) {
+      setError(t('errorValidQuantity'));
+      return;
+    }
+
+    const quantity = parseFloat(quantityStr);
     if (isNaN(quantity) || quantity <= 0) {
-      setError('Please enter a valid quantity');
+      setError(t('errorValidQuantity'));
       return;
     }
 
@@ -55,7 +62,8 @@ const PricePredictor: React.FC = () => {
       });
       setPrediction(result);
     } catch (err) {
-      setError('Failed to predict price. Please try again.');
+      setError(t('errorPredictionFailed'));
+      setPrediction(null); // Clear stale data on error
     } finally {
       setIsLoading(false);
     }
@@ -68,43 +76,44 @@ const PricePredictor: React.FC = () => {
     });
   };
 
-  const getTrendIcon = (trend: string) => {
+  const getTrendDetails = (trend: string) => {
     switch (trend) {
       case 'up':
-        return <TrendingUp className="w-5 h-5 text-green-500" />;
+        return { 
+          icon: <TrendingUp className="w-5 h-5 text-green-500" />, 
+          color: 'text-green-600' 
+        };
       case 'down':
-        return <TrendingDown className="w-5 h-5 text-red-500" />;
+        return { 
+          icon: <TrendingDown className="w-5 h-5 text-red-500" />, 
+          color: 'text-red-600' 
+        };
       default:
-        return <Minus className="w-5 h-5 text-gray-500" />;
+        return { 
+          icon: <Minus className="w-5 h-5 text-gray-500" />, 
+          color: 'text-gray-600' 
+        };
     }
   };
 
-  const getTrendColor = (trend: string) => {
-    switch (trend) {
-      case 'up':
-        return 'text-green-600';
-      case 'down':
-        return 'text-red-600';
-      default:
-        return 'text-gray-600';
-    }
-  };
+  const trendDetails = prediction ? getTrendDetails(prediction.marketTrend) : null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-amber-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          
           {/* Price Prediction Form */}
           <div className="bg-white rounded-2xl shadow-lg p-8">
             <div className="flex items-center mb-6">
               <Calculator className="w-6 h-6 text-green-600 mr-3" />
-              <h2 className="text-2xl font-bold text-gray-900">Price Prediction</h2>
+              <h2 className="text-2xl font-bold text-gray-900">{t('pricePrediction')}</h2>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-2">
-                  State
+                  {t('state')}
                 </label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -116,10 +125,10 @@ const PricePredictor: React.FC = () => {
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
                     required
                   >
-                    <option value="">Select state</option>
+                    <option value="">{t('selectState')}</option>
                     {statesAndCities.map((state) => (
                       <option key={state.name} value={state.name}>
-                        {state.name}
+                        {t(state.name)} {/* <-- Translation added here */}
                       </option>
                     ))}
                   </select>
@@ -128,7 +137,7 @@ const PricePredictor: React.FC = () => {
 
               <div>
                 <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
-                  City
+                  {t('city')}
                 </label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -141,10 +150,10 @@ const PricePredictor: React.FC = () => {
                     disabled={!formData.state}
                     required
                   >
-                    <option value="">{formData.state ? 'Select city' : 'Select state first'}</option>
+                    <option value="">{formData.state ? t('selectCity') : t('selectStateFirst')}</option>
                     {availableCities.map((city) => (
                       <option key={city} value={city}>
-                        {city}
+                        {t(city)} {/* <-- Translation added here */}
                       </option>
                     ))}
                   </select>
@@ -153,7 +162,7 @@ const PricePredictor: React.FC = () => {
 
               <div>
                 <label htmlFor="cropType" className="block text-sm font-medium text-gray-700 mb-2">
-                  Crop Type
+                  {t('cropType')}
                 </label>
                 <div className="relative">
                   <Wheat className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -165,10 +174,10 @@ const PricePredictor: React.FC = () => {
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
                     required
                   >
-                    <option value="">Select crop type</option>
-                    {cropTypes.map((crop) => (
+                    <option value="">{t('selectCropType')}</option>
+                    {CROP_TYPES.map((crop) => (
                       <option key={crop} value={crop}>
-                        {crop}
+                        {t(crop)} {/* <-- Translation added here */}
                       </option>
                     ))}
                   </select>
@@ -177,7 +186,7 @@ const PricePredictor: React.FC = () => {
 
               <div>
                 <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-2">
-                  Quantity (tons)
+                  {t('quantityTons')}
                 </label>
                 <div className="relative">
                   <Package className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -188,7 +197,7 @@ const PricePredictor: React.FC = () => {
                     value={formData.quantity}
                     onChange={handleInputChange}
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
-                    placeholder="Enter quantity in tons"
+                    placeholder={t('enterQuantity')}
                     min="0"
                     step="0.01"
                     required
@@ -197,7 +206,11 @@ const PricePredictor: React.FC = () => {
               </div>
 
               {error && (
-                <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
+                <div 
+                  role="alert" 
+                  aria-live="assertive" 
+                  className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm"
+                >
                   {error}
                 </div>
               )}
@@ -210,10 +223,10 @@ const PricePredictor: React.FC = () => {
                 {isLoading ? (
                   <div className="flex items-center justify-center">
                     <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                    Calculating Price...
+                    {t('calculatingPrice')}
                   </div>
                 ) : (
-                  'Get Price Prediction'
+                  t('getPricePrediction')
                 )}
               </button>
             </form>
@@ -221,18 +234,18 @@ const PricePredictor: React.FC = () => {
 
           {/* Price Results */}
           <div className="bg-white rounded-2xl shadow-lg p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Price Information</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('priceInformation')}</h2>
 
-            {prediction ? (
+            {prediction && trendDetails ? (
               <div className="space-y-6">
                 <div className="bg-gradient-to-r from-green-50 to-amber-50 rounded-xl p-6 border border-green-200">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-gray-900">
-                      {prediction.cropType} - {prediction.location}
+                      {t(prediction.cropType)} - {t(prediction.location)} {/* <-- Translating the result display too! */}
                     </h3>
                     <div className="flex items-center">
-                      {getTrendIcon(prediction.marketTrend)}
-                      <span className={`ml-2 text-sm font-medium ${getTrendColor(prediction.marketTrend)}`}>
+                      {trendDetails.icon}
+                      <span className={`ml-2 text-sm font-medium ${trendDetails.color}`}>
                         {prediction.marketTrend.charAt(0).toUpperCase() + prediction.marketTrend.slice(1)}
                       </span>
                     </div>
@@ -240,33 +253,33 @@ const PricePredictor: React.FC = () => {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-white rounded-lg p-4 shadow-sm">
-                      <p className="text-sm text-gray-600 mb-1">Price per kg</p>
+                      <p className="text-sm text-gray-600 mb-1">{t('pricePerKg')}</p>
                       <p className="text-2xl font-bold text-green-600">₹{prediction.pricePerKg}</p>
                     </div>
                     <div className="bg-white rounded-lg p-4 shadow-sm">
-                      <p className="text-sm text-gray-600 mb-1">Quantity</p>
-                      <p className="text-2xl font-bold text-gray-900">{prediction.quantity} tons</p>
+                      <p className="text-sm text-gray-600 mb-1">{t('quantity')}</p>
+                      <p className="text-2xl font-bold text-gray-900">{prediction.quantity} {t('tons')}</p>
                     </div>
                   </div>
 
                   <div className="mt-4 bg-white rounded-lg p-4 shadow-sm">
-                    <p className="text-sm text-gray-600 mb-1">Total Estimated Value</p>
+                    <p className="text-sm text-gray-600 mb-1">{t('totalEstimatedValue')}</p>
                     <p className="text-3xl font-bold text-amber-600">₹{prediction.totalPrice.toLocaleString()}</p>
                   </div>
 
                   <div className="mt-4 text-xs text-gray-500">
-                    Last updated: {prediction.lastUpdated}
+                    {t('lastUpdated')}: {prediction.lastUpdated}
                   </div>
                 </div>
 
                 <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                  <h4 className="font-semibold text-blue-900 mb-2">Market Insights</h4>
+                  <h4 className="font-semibold text-blue-900 mb-2">{t('marketInsights')}</h4>
                   <p className="text-sm text-blue-800">
-                    Current market trend for {prediction.cropType} in {prediction.location} is{' '}
-                    <span className={`font-semibold ${getTrendColor(prediction.marketTrend)}`}>
+                    {t('currentMarketTrendFor')} {t(prediction.cropType)} {t('in')} {t(prediction.location)} {t('is')}{' '}
+                    <span className={`font-semibold ${trendDetails.color}`}>
                       {prediction.marketTrend}
                     </span>
-                    . Prices are based on latest market data and historical trends.
+                    . {t('pricesBasedOnInfo')}
                   </p>
                 </div>
               </div>
@@ -275,9 +288,9 @@ const PricePredictor: React.FC = () => {
                 <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Calculator className="w-12 h-12 text-gray-400" />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No Prediction Yet</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">{t('noPredictionYet')}</h3>
                 <p className="text-gray-600">
-                  Enter your crop details in the form to get accurate market price predictions.
+                  {t('enterCropDetailsText')}
                 </p>
               </div>
             )}

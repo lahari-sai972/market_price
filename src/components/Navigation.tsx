@@ -1,6 +1,8 @@
 import React from 'react';
 import { Calculator, MessageCircle, Wheat, LogOut, Lightbulb } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import LanguageSelector from './LanguageSelector';
+import { useTranslation } from "react-i18next";
 
 interface NavigationProps {
   currentPage: 'predictor' | 'contact' | 'suggestions';
@@ -9,6 +11,8 @@ interface NavigationProps {
 
 const Navigation: React.FC<NavigationProps> = ({ currentPage, onPageChange }) => {
   const { user, logout } = useAuth();
+  // STEP 1: Added i18n to the destructured object
+  const { t, i18n } = useTranslation();
 
   return (
     <div className="bg-white shadow-sm border-b border-gray-200">
@@ -19,8 +23,10 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, onPageChange }) =>
               <Wheat className="w-6 h-6 text-green-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">AgriPrice Pro</h1>
-              <p className="text-sm text-gray-600">Market Price Predictor</p>
+              <h1 className="text-2xl font-bold text-gray-900">{t("appName")}</h1>
+              <p className="text-sm text-gray-600">{t("appSubtitle")}</p>
+              {/* STEP 2: Added the language debug text */}
+              <p className="text-red-500">{i18n.language}</p>
             </div>
           </div>
 
@@ -36,7 +42,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, onPageChange }) =>
                 }`}
               >
                 <Calculator className="w-4 h-4 mr-2" />
-                Price Predictor
+                {t("pricePredictor")}
               </button>
               <button
                 onClick={() => onPageChange('suggestions')}
@@ -47,7 +53,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, onPageChange }) =>
                 }`}
               >
                 <Lightbulb className="w-4 h-4 mr-2" />
-                Crop Suggestions
+                {t("cropSuggestions")}
               </button>
               <button
                 onClick={() => onPageChange('contact')}
@@ -58,14 +64,16 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, onPageChange }) =>
                 }`}
               >
                 <MessageCircle className="w-4 h-4 mr-2" />
-                Contact
+                {t("contact")}
               </button>
             </nav>
 
             {/* User Info and Logout */}
             <div className="flex items-center space-x-4">
+              <LanguageSelector />
+              
               <div className="text-right hidden sm:block">
-                <p className="text-sm text-gray-600">Welcome back,</p>
+                <p className="text-sm text-gray-600">{t("welcomeBack")}</p>
                 <p className="font-semibold text-gray-900 capitalize">{user?.name}</p>
               </div>
               <button
@@ -73,7 +81,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentPage, onPageChange }) =>
                 className="flex items-center px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all duration-200"
               >
                 <LogOut className="w-4 h-4 mr-2" />
-                <span className="hidden sm:inline">Sign Out</span>
+                <span className="hidden sm:inline">{t("signOut")}</span>
               </button>
             </div>
           </div>
