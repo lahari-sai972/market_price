@@ -83,9 +83,6 @@ The application supports the following languages:
 Users can switch between languages using the language selector available in the navigation bar.
 
 ## Future Enhancements
-
-- Live market price integration
-- Weather-based crop recommendations
 - AI-powered crop prediction
 - Voice assistance
 - Farmer notifications
